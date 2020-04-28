@@ -37,6 +37,15 @@ Lorem ipsum
 
 Lorem ipsum
 
+## Security requirement
+> What are the security requirements for this epic?
+> How can the functionality be misused and how to mitigate this?
+> Does the epic change any critical components?
+> Does the epic introduce any new components?
+
+
+Lorem ipsum
+
 ## Dependencies
 > Specify any dependencies by clicking "add dependency" below.
 > NB! Dependencies can only be added and are only visible when the issue is viewed through Zenhub.

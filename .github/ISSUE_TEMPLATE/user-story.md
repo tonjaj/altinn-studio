@@ -16,6 +16,12 @@ labels: kind/user-story
 ## Acceptance criteria
 > Describe criteria here (i.e. What is allowed/not allowed (negative tesing), validations, error messages and warnings etc.)
 
+## Security requirements
+> What are the security requirements for this user story?
+> How can the functionality be misused and how to mitigate this?
+> Does the story change any critical components?
+> Does the story introduce any new components?
+
 ## Specification tasks
 
 - [ ] Development tasks are defined
