@@ -2,6 +2,7 @@
 import * as React from 'react';
 import { useSelector } from 'react-redux';
 import { ITextResource, IRuntimeState } from 'src/types';
+import OEDStartside from '../custom/OEDStartside';
 
 export default function CustomView() {
   // Load app text resources
@@ -11,7 +12,8 @@ export default function CustomView() {
 
   return (
     <div id='custom-view-container'>
-      <h2>This is a custom view</h2>
+      <h2>This is a custom view for å utvikle OED.</h2>
+      <OEDStartside></OEDStartside>
     </div>
   );
 }
