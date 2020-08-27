@@ -3,6 +3,6 @@ import { fork } from 'redux-saga/effects';
 
 import { watchSetCustomDataSaga } from './setCustomData/setCustomDataSagas';
 
-export default function* (): SagaIterator {
+export default function* CustomSagas(): SagaIterator {
   yield fork(watchSetCustomDataSaga);
 }

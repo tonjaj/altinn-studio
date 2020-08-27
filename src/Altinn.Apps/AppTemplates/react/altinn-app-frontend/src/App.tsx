@@ -3,7 +3,6 @@ import * as React from 'react';
 import { Route, Switch } from 'react-router-dom';
 import { AltinnAppTheme } from 'altinn-shared/theme';
 import { useSelector } from 'react-redux';
-import CustomInstance from 'custom-instance/App';
 import Instantiate from './features/instantiate/containers';
 import UnknownError from './features/instantiate/containers/UnknownError';
 import PartySelection from './features/instantiate/containers/PartySelection';
@@ -11,6 +10,7 @@ import QueueActions from './resources/queue/queueActions';
 import { get } from './utils/networking';
 import { getEnvironmentLoginUrl, refreshJwtTokenUrl } from './utils/urlHelper';
 import { makeGetHasErrorsSelector } from './selectors/getErrors';
+import ProcessStepWrapper from './containers/ProcessStepWrapper';
 
 const theme = createMuiTheme(AltinnAppTheme);
 
@@ -82,7 +82,7 @@ export default function App() {
         <Route
           path='/instance/:partyId/:instanceGuid'
           exact={true}
-          component={CustomInstance}
+          component={ProcessStepWrapper}
         />
       </Switch>
     </MuiThemeProvider>

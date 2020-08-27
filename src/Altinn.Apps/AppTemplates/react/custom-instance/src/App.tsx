@@ -1,14 +1,29 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { createMuiTheme, MuiThemeProvider } from '@material-ui/core';
 import * as React from 'react';
 import { AltinnAppTheme } from 'altinn-shared/theme';
-import ProcessStepWrapper from './containers/ProcessStepWrapper';
+import CustomView from './features/custom/CustomView';
 
 const theme = createMuiTheme(AltinnAppTheme);
 
-export default function App() {
+export default function App(props: any) {
+  const {
+    applicationMetadata,
+    instantiating,
+    instanceGuid,
+    partyId,
+    textResources,
+    language,
+    isLoading,
+    processStep,
+    userLanguage,
+  } = props;
   return (
     <MuiThemeProvider theme={theme}>
-      <ProcessStepWrapper />
+      <CustomView
+        textResources={textResources}
+        language={language}
+      />
     </MuiThemeProvider>
   );
 }

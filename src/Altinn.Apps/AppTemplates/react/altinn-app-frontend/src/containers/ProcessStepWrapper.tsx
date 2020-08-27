@@ -3,6 +3,7 @@ import * as React from 'react';
 import { useSelector } from 'react-redux';
 import { AltinnContentLoader, AltinnContentIconFormData } from 'altinn-shared/components';
 import { getLanguageFromKey, getUserLanguage } from 'altinn-shared/utils';
+import CustomInstance from 'custom-instance/App';
 import InstanceDataActions from '../resources/instanceData/instanceDataActions';
 import ProcessDispatcher from '../resources/process/processDispatcher';
 import { IRuntimeState, ProcessSteps, IAltinnWindow } from '../types';
@@ -11,7 +12,6 @@ import ReceiptContainer from '../features/receipt/containers/receiptContainer';
 import UnknownError from '../features/instantiate/containers/UnknownError';
 import QueueActions from '../resources/queue/queueActions';
 import { makeGetHasErrorsSelector } from '../selectors/getErrors';
-import CustomView from '../features/custom/CustomView';
 
 export default (props) => {
   const {
@@ -28,7 +28,8 @@ export default (props) => {
   const instanceId = useSelector((state: IRuntimeState) => state.instantiation.instanceId);
   const applicationMetadata: any = useSelector((state: IRuntimeState) => state.applicationMetadata.applicationMetadata);
   const isLoading: boolean = useSelector((state: IRuntimeState) => state.isLoading.dataTask);
-  const textResources: any[] = useSelector((state: IRuntimeState) => state.language.language);
+  const language: any[] = useSelector((state: IRuntimeState) => state.language.language);
+  const textResources: any = useSelector((state: IRuntimeState) => state.textResources.resources);
   const processStep: ProcessSteps = useSelector((state: IRuntimeState) => state.process.state);
   const hasErrorSelector = makeGetHasErrorsSelector();
   const hasApiErrors = useSelector(hasErrorSelector);
@@ -79,7 +80,7 @@ export default (props) => {
       header={
         applicationMetadata &&
           applicationMetadata.title[userLanguage] ? applicationMetadata.title[userLanguage] :
-          getLanguageFromKey('general.ServiceName', textResources)
+          getLanguageFromKey('general.ServiceName', language)
       }
       step={processStep}
     >
@@ -93,7 +94,17 @@ export default (props) => {
             }
             {processStep !== ProcessSteps.Archived &&
               <div id='custom-view'>
-                <CustomView />
+                <CustomInstance
+                  instantiating={instantiating}
+                  instanceGuid={instanceGuid}
+                  applicationMetadata={applicationMetadata}
+                  isLoading={isLoading}
+                  language={language}
+                  textResources={textResources}
+                  partyId={partyId}
+                  processStep={processStep}
+                  userLanguage={userLanguage}
+                />
               </div>
             }
           </>
