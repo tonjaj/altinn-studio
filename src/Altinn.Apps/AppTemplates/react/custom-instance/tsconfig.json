@@ -9,9 +9,6 @@
     "paths": {
       "altinn-shared/*": [
         "../shared/src/*",
-      ],
-      "custom-instance/*": [
-        "../custom-instance/src/*",
       ]
     },
     "outDir": "compiled",

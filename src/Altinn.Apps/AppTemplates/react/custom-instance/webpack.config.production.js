@@ -1,11 +1,16 @@
 const HtmlWebPackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 const CheckerPlugin = require('awesome-typescript-loader').CheckerPlugin;
+const webpack = require('webpack');
+const GitRevisionPlugin = require('git-revision-webpack-plugin');
+const gitRevisionPlugin = new GitRevisionPlugin();
+const package = require('./package.json');
 const path = require('path');
 
 module.exports = {
-  mode: 'development',
-  devtool: 'inline-source-map',
+  mode: 'production',
+  devtool: false,
   entry: [
     "core-js/modules/es.object.assign",
     "core-js/modules/es.array.find-index",
@@ -16,10 +21,10 @@ module.exports = {
     filename: "altinn-app-frontend.js",
     // chunkFilename: '[name].bundle.js'
   },
-  /* optimization: {
+  /*optimization: {
     splitChunks: {
       chunks: 'all',
-      maxInitialRequests: 5,
+      maxInitialRequests: Infinity,
       minSize: 0,
       cacheGroups: {
         vendor: {
@@ -30,19 +35,24 @@ module.exports = {
           }
         }
       }
-    }
-  }, */
+    },
+  },*/
   resolve: {
     extensions: [".ts", ".tsx", ".js", ".jsx", ".css", ".scss"],
     alias: {
       // CUSTOM PACKAGES
       'altinn-shared': path.resolve(__dirname, './../shared/src'),
-      'src': path.resolve(__dirname, './src'),
-      'custom-instance': path.resolve(__dirname, './../custom-instance/src'),
+      'src': path.resolve(__dirname, './src')
     }
   },
   performance: {
-    hints: 'warning',
+    hints: false,
+  },
+  optimization: {
+    minimize: true,
+    minimizer: [
+      new TerserPlugin(),
+    ],
   },
   module: {
     rules: [{
@@ -53,15 +63,6 @@ module.exports = {
       }
     },
     {
-      test: /\.html$/,
-      use: [{
-        loader: "html-loader",
-        options: {
-          minimize: true
-        }
-      }]
-    },
-    {
       test: /\.scss$/,
       use: [
         "style-loader",
@@ -69,17 +70,11 @@ module.exports = {
       ]
     },
     {
-      test: /\.svg$/,
-      use: {
-        loader: "svg-inline-loader",
-      }
-    },
-    {
       test: /\.css$/,
       use: [{
         loader: MiniCssExtractPlugin.loader,
         options: {
-          url: false,
+          url: false
         }
       },
       {
@@ -87,21 +82,17 @@ module.exports = {
         options: {
           url: false
         }
-      },
+      }
       ]
     },
     {
       test: /\.tsx?/,
       loader: "awesome-typescript-loader",
-    },
-    {
-      enforce: "pre",
-      test: /\.js$/,
-      loader: "source-map-loader",
     }
     ],
   },
   plugins: [
+    new CheckerPlugin(),
     new HtmlWebPackPlugin({
       template: './public/index.html',
       filename: 'index.html'
@@ -109,10 +100,8 @@ module.exports = {
     new MiniCssExtractPlugin({
       filename: "altinn-app-frontend.css",
     }),
-    new CheckerPlugin(),
+    new webpack.BannerPlugin({
+      banner: package.name + ', v' + package.version + ', https://github.com/Altinn/altinn-studio/tree/' + gitRevisionPlugin.commithash() + '/src/react-apps/applications/altinn-app-frontend'
+    })
   ],
-  devServer: {
-    historyApiFallback: true,
-    disableHostCheck: true
-  },
-}
+};

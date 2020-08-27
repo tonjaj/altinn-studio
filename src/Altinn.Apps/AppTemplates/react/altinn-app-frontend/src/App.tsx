@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Route, Switch } from 'react-router-dom';
 import { AltinnAppTheme } from 'altinn-shared/theme';
 import { useSelector } from 'react-redux';
-import ProcessStepWrapper from './containers/ProcessStepWrapper';
+import CustomInstance from 'custom-instance/App';
 import Instantiate from './features/instantiate/containers';
 import UnknownError from './features/instantiate/containers/UnknownError';
 import PartySelection from './features/instantiate/containers/PartySelection';
@@ -17,7 +17,7 @@ const theme = createMuiTheme(AltinnAppTheme);
 // 1 minute = 60.000ms
 const TEN_MINUTE_IN_MILLISECONDS: number = 60000 * 10;
 
-export default function () {
+export default function App() {
   const hasErrorSelector = makeGetHasErrorsSelector();
   const hasApiErrors: boolean = useSelector(hasErrorSelector);
 
@@ -82,7 +82,7 @@ export default function () {
         <Route
           path='/instance/:partyId/:instanceGuid'
           exact={true}
-          component={ProcessStepWrapper}
+          component={CustomInstance}
         />
       </Switch>
     </MuiThemeProvider>
