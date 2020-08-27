@@ -7,22 +7,11 @@ import CustomView from './features/custom/CustomView';
 const theme = createMuiTheme(AltinnAppTheme);
 
 export default function App(props: any) {
-  const {
-    applicationMetadata,
-    instantiating,
-    instanceGuid,
-    partyId,
-    textResources,
-    language,
-    isLoading,
-    processStep,
-    userLanguage,
-  } = props;
   return (
     <MuiThemeProvider theme={theme}>
       <CustomView
-        textResources={textResources}
-        language={language}
+        textResources={null}
+        language={null}
       />
     </MuiThemeProvider>
   );
