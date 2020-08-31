@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -141,6 +142,27 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             }
 
             return policy;
+        }
+
+        /// <summary>
+        /// This methods find all delegated polices for a given authorization requst
+        /// It will use information about 
+        /// </summary>
+        /// <param name="request">The XacmlContextRequest</param>
+        /// <returns></returns>
+        public Task<List<XacmlPolicyDelegation>> GetPolicyDelegationsAsync(XacmlContextRequest request)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// This will retrieve a given policy
+        /// </summary>
+        /// <param name="policyDelegation">Contains information about the policy in question</param>
+        /// <returns></returns>
+        public Task<XacmlPolicy> GetDelegatedPolicyAsync(XacmlPolicyDelegation policyDelegation)
+        {
+            throw new NotImplementedException();
         }
     }
 }

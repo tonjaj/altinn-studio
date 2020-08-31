@@ -197,7 +197,48 @@ namespace Altinn.Platform.Authorization.Controllers
             PolicyDecisionPoint pdp = new PolicyDecisionPoint();
             XacmlContextResponse xacmlContextResponse = pdp.Authorize(decisionRequest, policy);
             _logger.LogInformation($"// DecisionController // Authorize // XACML ContextResponse: {JsonConvert.SerializeObject(xacmlContextResponse)}.");
+
+            // If decision is not Applicable it means that the standard policy does not allow for user/organization/system to perform this action
+            // There might be delegated rights 
+            if (xacmlContextResponse.Results.First().Decision.Equals(XacmlContextDecision.NotApplicable))
+            {
+                XacmlContextResponse delegatedResponse = await AuthorizeByDelegatedPolicy(decisionRequest);
+                if (delegatedResponse == null)
+                {
+                    // There was no delegation matching. Return original result.
+                    return xacmlContextResponse;
+                }
+            }
+
             return xacmlContextResponse;
+        }
+
+        /// <summary>
+        /// Authorize a decision request based on any available delegated policies
+        /// </summary>
+        /// <param name="decisionRequest">The decision request</param>
+        /// <returns></returns>
+        private async Task<XacmlContextResponse> AuthorizeByDelegatedPolicy(XacmlContextRequest decisionRequest)
+        {
+            XacmlContextResponse delegatedXacmlContextResponse = null;
+            List<XacmlPolicyDelegation> policyDelegations = await this._prp.GetPolicyDelegationsAsync(decisionRequest);
+            if (policyDelegations.Count == 0)
+            {
+                return delegatedXacmlContextResponse;
+            }
+
+            foreach (XacmlPolicyDelegation policyDelegation in policyDelegations)
+            {
+                XacmlPolicy delegatedPolicy = await this._prp.GetDelegatedPolicyAsync(policyDelegation);
+                PolicyDecisionPoint pdp = new PolicyDecisionPoint();
+                delegatedXacmlContextResponse = pdp.Authorize(decisionRequest, delegatedPolicy);
+                if (delegatedXacmlContextResponse.Results.First().Decision.Equals(XacmlContextDecision.Permit))
+                {
+                    return delegatedXacmlContextResponse;
+                }
+            }
+
+            return delegatedXacmlContextResponse;
         }
     }
 }

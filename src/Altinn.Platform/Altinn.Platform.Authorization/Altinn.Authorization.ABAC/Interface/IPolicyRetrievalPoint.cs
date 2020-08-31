@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Altinn.Authorization.ABAC.Xacml;
@@ -15,6 +16,20 @@ namespace Altinn.Authorization.ABAC.Interface
         /// <param name="request">The context request</param>
         /// <returns></returns>
         Task<XacmlPolicy> GetPolicyAsync(XacmlContextRequest request);
+
+        /// <summary>
+        /// Returns a list over delegated policies based on XacmlContextRequest
+        /// </summary>
+        /// <param name="request">The context request</param>
+        /// <returns>A list of delegations</returns>
+        Task<List<XacmlPolicyDelegation>> GetPolicyDelegationsAsync(XacmlContextRequest request);
+
+        /// <summary>
+        /// Returns a policy based on a policy delegation
+        /// </summary>
+        /// <param name="policyDelegation)">The policy delegation</param>
+        /// <returns></returns>
+        Task<XacmlPolicy> GetDelegatedPolicyAsync(XacmlPolicyDelegation policyDelegation);
 
         /// <summary>
         /// Returns a bool based on writing file to storage was successful

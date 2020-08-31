@@ -50,11 +50,17 @@
     <None Update="Data\Roles\user_1\party_1000\roles.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Data\Xacml\3.0\AltinnApps\AltinnApps0027Request.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Data\Xacml\3.0\AltinnApps\AltinnApps0021EnrichedRequest.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Data\Xacml\3.0\AltinnApps\AltinnApps0021Request.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Data\Xacml\3.0\AltinnApps\skd\taxreport\delegations\party_1000\User_3\policy.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Data\Xacml\3.0\PolicyRepository\IIA003Policy.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

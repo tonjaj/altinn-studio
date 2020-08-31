@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using System.Xml;
@@ -117,6 +118,16 @@ namespace Altinn.Platform.Authorization.IntegrationTests.MockServices
         public async Task<bool> WritePolicyAsync(string org, string app, Stream fileStream)
         {
             return await Task.FromResult(true);
+        }
+
+        public Task<List<XacmlPolicyDelegation>> GetPolicyDelegationsAsync(XacmlContextRequest request)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<XacmlPolicy> GetDelegatedPolicyAsync(XacmlPolicyDelegation policyDelegation)
+        {
+            throw new NotImplementedException();
         }
     }
 }
