@@ -11,6 +11,14 @@ namespace Altinn.Platform.Storage.Interface.Models
     public class EFormidlingContract
     {
         /// <summary>
+        /// Task identifier to dertermine end of task
+        /// </summary>
+        /// <remarks>
+        /// Available services are DPO, DPV, DPF and DPI.
+        /// </remarks>
+        public string TaskId { get; set; }
+             
+        /// <summary>
         /// Service identifier for the process
         /// </summary>
         /// <remarks>

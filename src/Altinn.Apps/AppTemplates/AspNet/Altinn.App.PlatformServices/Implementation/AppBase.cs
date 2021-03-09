@@ -12,6 +12,10 @@ using Altinn.App.Services.Helpers;
 using Altinn.App.Services.Interface;
 using Altinn.App.Services.Models;
 using Altinn.App.Services.Models.Validation;
+using Altinn.Common.EFormidlingClient;
+using Altinn.Common.EFormidlingClient.Configuration;
+using Altinn.Common.EFormidlingClient.Models;
+using Altinn.Common.EFormidlingClient.Models.SBD;
 using Altinn.Platform.Profile.Models;
 using Altinn.Platform.Storage.Interface.Models;
 
@@ -21,6 +25,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Altinn.App.Services.Implementation
 {
@@ -43,6 +48,9 @@ namespace Altinn.App.Services.Implementation
         private readonly IProfile _profileService;
         private readonly IText _textService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IOptions<EFormidlingClientSettings> _eSettings;
+
+        private readonly IEFormidlingClient _eFormidlingClient;
 
         /// <summary>
         /// Initialize a new instance of <see cref="AppBase"/> class with the given services.
@@ -59,6 +67,8 @@ namespace Altinn.App.Services.Implementation
         /// <param name="profileService">the profile service</param>
         /// <param name="textService">The text service</param>
         /// <param name="httpContextAccessor">the httpContextAccessor</param>
+        /// <param name="eFormidlingClient">Test</param>
+        /// <param name="eFormidlingSettings">Test settings</param>
         protected AppBase(
             IAppResources resourceService,
             ILogger<AppBase> logger,
@@ -71,8 +81,12 @@ namespace Altinn.App.Services.Implementation
             IOptions<GeneralSettings> settings,
             IProfile profileService,
             IText textService,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            IEFormidlingClient eFormidlingClient,
+            IOptions<EFormidlingClientSettings> eFormidlingSettings)
+
         {
+            _eSettings = eFormidlingSettings;
             _appMetadata = resourceService.GetApplication();
             _resourceService = resourceService;
             _logger = logger;
@@ -86,6 +100,8 @@ namespace Altinn.App.Services.Implementation
             _profileService = profileService;
             _textService = textService;
             _httpContextAccessor = httpContextAccessor;
+            _eFormidlingClient = eFormidlingClient;
+
         }
 
         /// <inheritdoc />
@@ -236,24 +252,174 @@ namespace Altinn.App.Services.Implementation
                 await _instanceService.DeleteInstance(instanceOwnerPartyId, instanceGuid, true);
             }
 
+            SendViaeFormidling(instance, taskId);
+
             await Task.CompletedTask;
         }
 
-        /// <inheritdoc />
-        public virtual async Task<List<string>> GetPageOrder(string org, string app, int instanceOwnerId, Guid instanceGuid, string layoutSetId, string currentPage, string dataTypeId, object formData)
+        private void VerifyEndOfProcess()
         {
-            LayoutSettings layoutSettings = null;
+            //ToDo:
+        }
 
-            if (string.IsNullOrEmpty(layoutSetId))
+        //public virtual async Task<string> GetEFormidlingReceiver(Instance instance)
+        //{
+        //    // could we get the receiver from appmetadata here? 
+        //    return await Task.FromResult(string.Empty);
+        //}
+
+        private async void RetrieveSchemaData(Instance instance, string taskId)
+        {
+            Guid instanceGuid = Guid.Parse(instance.Id.Split("/")[1]);
+            int instanceOwnerPartyId = int.Parse(instance.InstanceOwner.PartyId);
+
+            // FindAll de => de.DataType == dataType.Id))
+
+            foreach (DataType dataType in _appMetadata.DataTypes.Where(dt => dt.TaskId == taskId && dt.AppLogic?.AutoCreate == true))
             {
-                layoutSettings = _resourceService.GetLayoutSettings();
+                foreach (DataElement dataElement in instance.Data)
+                {
+                    Type dataElementType = GetAppModelType(dataType.AppLogic.ClassRef);
+                    object data = await _dataService.GetFormData(instanceGuid, dataElementType, instance.Org, instance.AppId, instanceOwnerPartyId, new Guid(dataElement.Id));
+                }
             }
-            else
+        }
+
+        private async void RetrieveAndSendBinaryAttachments(Instance instance)
+        {
+            Guid instanceGuid = Guid.Parse(instance.Id.Split("/")[1]);
+            int instanceOwnerPartyId = int.Parse(instance.InstanceOwner.PartyId);
+
+            List<Stream> attachments = new List<Stream>();
+            List<(string, Stream)> list = new List<(string, Stream)>();
+            
+            //var attachmentList = _dataService.GetBinaryDataList(instance.Org, instance.AppId, instanceOwnerPartyId, instanceGuid).Result;
+
+            foreach (DataElement dataElement in instance.Data)
             {
-                layoutSettings = _resourceService.GetLayoutSettingsForSet(layoutSetId);
+                if (dataElement.Filename != null)
+                {
+                    using (Stream fileStream = _dataService.GetBinaryData(instance.Org, instance.AppId, instanceOwnerPartyId, instanceGuid, new Guid(dataElement.Id)).Result)
+                    {
+                        var sendBinary = await _eFormidlingClient.UploadAttachment(fileStream, instanceGuid.ToString(), dataElement.Filename);
+                    }
+                   
+                    // attachments.Add(fileStream);
+                    //list.Add((dataElement.Filename, fileStream));
+                    //SaveStreamAsFile(@"C:\Users\Trond\Altinn\Altinn.EFormidlingClient\XUnitTestFormidling\TestData\output", fileStream, dataElement.Filename);
+                }
+            }   
+        }
+
+        private bool VerifyCapabilities(Capabilities capabilities)
+        {
+            // By App developer
+            // "urn:no:difi:profile:arkivmelding:planByggOgGeodata:ver1.0";
+            string type = "arkivmelding";
+            string serviceIdentifier = "DPO";
+            bool isValid = false;
+
+            foreach (var capability in capabilities.Capability)
+            {
+                if (capability.ServiceIdentifier == serviceIdentifier)
+                {
+                    foreach (var docType in capability.DocumentTypes)
+                    {
+                        if (docType.Type == type)
+                        {
+                            isValid = true;
+                        }
+                    }
+                }
             }
 
-            return await Task.FromResult(layoutSettings.Pages.Order);
+            return isValid;
+        }
+
+        private StandardBusinessDocument ConstructSBD(Instance instance)
+        {
+            // Prefilled - replace config
+            JObject sbdJson = JObject.Parse(File.ReadAllText(@"C:\Users\Trond\Altinn\Altinn.EFormidlingClient\XUnitTestFormidling\TestData\sbd.json"));
+            StandardBusinessDocument sbd = JsonConvert.DeserializeObject<StandardBusinessDocument>(sbdJson.ToString());
+
+            string type = "arkivmelding";
+
+            string process = "urn:no:difi:profile:arkivmelding:administrasjon:ver1.0";
+            
+            //EFormidlingContract sbdConfig = new EFormidlingContract();
+            //sbdConfig.ServiceId = "DPO";
+            //sbdConfig.Receiver = "910075918";
+            //sbdConfig.Process = process;
+            //sbdConfig.DataTypes = type;
+                
+            DateTime currentCreationTime = DateTime.Now;
+            DateTime currentCreationTime2HoursLater = currentCreationTime.AddHours(2);
+            string instanceGuid = Guid.Parse(instance.Id.Split("/")[1]).ToString();
+
+            sbd.StandardBusinessDocumentHeader.BusinessScope.Scope.First().Identifier = process;
+            sbd.StandardBusinessDocumentHeader.BusinessScope.Scope.First().InstanceIdentifier = instanceGuid;
+            sbd.StandardBusinessDocumentHeader.BusinessScope.Scope.First().ScopeInformation.First().ExpectedResponseDateTime = currentCreationTime2HoursLater;
+            sbd.StandardBusinessDocumentHeader.DocumentIdentification.Type = type;
+            sbd.StandardBusinessDocumentHeader.DocumentIdentification.InstanceIdentifier = instanceGuid;
+            sbd.StandardBusinessDocumentHeader.DocumentIdentification.CreationDateAndTime = currentCreationTime;
+
+            return sbd;
+        }
+
+        private static void SaveStreamAsFile(string filePath, Stream inputStream, string fileName)
+        {
+            DirectoryInfo info = new DirectoryInfo(filePath);
+            if (!info.Exists)
+            {
+                info.Create();
+            }
+
+            string path = Path.Combine(filePath, fileName);
+            using (FileStream outputFileStream = new FileStream(path, FileMode.Create))
+            {
+                inputStream.CopyTo(outputFileStream);
+            }
+        }
+
+        private async void SendViaeFormidling(Instance instance, string taskId)
+        {
+            var guid = instance.Id;
+
+            // Guid instanceGuid = Guid.Parse(instance.Id.Split("/")[1]);
+            int instanceOwnerPartyId = int.Parse(instance.InstanceOwner.PartyId);
+            string instanceGuid = Guid.Parse(instance.Id.Split("/")[1]).ToString();
+
+            //If metadataConfig SendViaeFormindg == True:
+
+           // var attachments = RetrieveBinaryAttachments(instance);
+
+            //We Won't use capabilities
+
+            //Capabilities capabilities = await _eFormidlingClient.GetCapabilities("910075918");
+            //bool isValid = VerifyCapabilities(capabilities);
+       
+            var sbd = ConstructSBD(instance);
+            StandardBusinessDocument sbdVerified = await _eFormidlingClient.CreateMessage(sbd);
+            RetrieveAndSendBinaryAttachments(instance);
+
+            //foreach (var attachment in attachments)
+            //{
+            //    var fileName = attachment.Item1;
+            //    var stream = attachment.Item2;
+            //    var sendBinary = await _eFormidlingClient.UploadAttachment(stream, instanceGuid, fileName);
+            //}
+
+            string filename = "arkivmelding.xml";
+            using (FileStream fs2 = File.OpenRead(@"C:\Users\Trond\Altinn\Altinn.EFormidlingClient\XUnitTestFormidling\TestData\arkivmelding.xml"))
+            {
+                if (fs2.Length > 3)
+                {
+                    var sendArkivmelding = await _eFormidlingClient.UploadAttachment(fs2, instanceGuid, filename);
+                }
+            }
+
+            var completeSending = await _eFormidlingClient.SendMessage(instanceGuid);
+            Statuses thisMessageStatusAfter = await _eFormidlingClient.GetMessageStatusById(instanceGuid);               
         }
 
         private async Task GenerateAndStoreReceiptPDF(Instance instance, string taskId, DataElement dataElement, Type dataElementModelType)
@@ -272,7 +438,7 @@ namespace Altinn.App.Services.Implementation
                 layoutSet = layoutSets.Sets.FirstOrDefault(t => t.DataType.Equals(dataElement.DataType) && t.Tasks.Contains(taskId));
             }
 
-            string layoutSettingsFileContent = layoutSet == null ? _resourceService.GetLayoutSettingsString() : _resourceService.GetLayoutSettingsStringForSet(layoutSet.Id);
+            string layoutSettingsFileContent = layoutSet == null ? _resourceService.GetLayoutSettings() : _resourceService.GetLayoutSettingsForSet(layoutSet.Id);
 
             LayoutSettings layoutSettings = null;
             if (!string.IsNullOrEmpty(layoutSettingsFileContent))
@@ -402,7 +568,7 @@ namespace Altinn.App.Services.Implementation
                     }
 
                     dictionary.Add(optionsId, options);
-                }
+                }          
             }
 
             return dictionary;
