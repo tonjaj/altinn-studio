@@ -43,6 +43,14 @@ namespace Altinn.Platform.Storage.Interface.Models
         public string Process { get; set; }
 
         /// <summary>
+        /// Flagg to determine if eFormidling is going to be used
+        /// </summary>
+        /// <remarks>
+        /// Receiver must be able to support the process type. This is defined in receiver's capabilities.
+        /// </remarks>
+        public bool SendWithEFormidling { get; set; }
+
+        /// <summary>
         /// List of ids for the data types to include in the shipment.
         /// </summary>
         public List<string> DataTypes { get; set; }
