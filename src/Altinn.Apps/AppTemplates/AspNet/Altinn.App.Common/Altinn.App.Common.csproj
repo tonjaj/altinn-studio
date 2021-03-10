@@ -18,10 +18,10 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="Altinn.Platform.Storage.Interface" Version="2.5.5" />
+    <!--<PackageReference Include="Altinn.Platform.Storage.Interface" Version="2.5.2" />-->
   </ItemGroup>
+
 
   <ItemGroup Condition="'$(Configuration)'=='Debug'">
     <PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
@@ -31,6 +31,11 @@
     <AdditionalFiles Include="..\..\..\..\..\stylecop.json">
       <Link>stylecop.json</Link>
     </AdditionalFiles>
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Altinn.Platform\Altinn.Platform.Storage\Storage.Interface\Altinn.Platform.Storage.Interface.csproj" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
