@@ -17,10 +17,11 @@
 
   <ItemGroup>
     <PackageReference Include="Altinn.Common.PEP" Version="1.0.38-alpha" />
-    <PackageReference Include="Altinn.Platform.Storage.Interface" Version="2.5.5" />
+    <!--<PackageReference Include="Altinn.Platform.Storage.Interface" Version="2.5.5" />-->
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Altinn.Platform\Altinn.Platform.Storage\Storage.Interface\Altinn.Platform.Storage.Interface.csproj" />
     <ProjectReference Include="..\Altinn.App.Common\Altinn.App.Common.csproj" />
     <ProjectReference Include="..\Altinn.App.PlatformServices\Altinn.App.PlatformServices.csproj" />
   </ItemGroup>
