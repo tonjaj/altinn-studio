@@ -114,12 +114,14 @@ export function* putFormData(state: IRuntimeState, model: any) {
     state.instanceData.instance,
   );
   try {
-    yield call(put, dataElementUrl(defaultDataElementGuid), model);
+    console.log('we are here');
+    yield call(put, dataElementUrl(defaultDataElementGuid), model, { maxRedirects: 0 });
   } catch (error) {
     if (isIE) {
       // 303 is treated as en error in IE - we try to fetch.
       yield sagaPut(FormDataActions.fetchFormData({ url: dataElementUrl(defaultDataElementGuid) }));
     } else if (error.response && error.response.status === 303) {
+      console.log('not IE');
       // 303 means that data has been changed by calculation on server. Try to update from response.
       const calculationUpdateHandled = yield call(handleCalculationUpdate, error.response.data?.changedFields);
       if (!calculationUpdateHandled) {
@@ -129,6 +131,8 @@ export function* putFormData(state: IRuntimeState, model: any) {
         yield sagaPut(FormLayoutActions.initRepeatingGroups());
       }
     } else {
+      console.log('error ', error);
+      console.log('error.response ', error.response);
       throw error;
     }
   }

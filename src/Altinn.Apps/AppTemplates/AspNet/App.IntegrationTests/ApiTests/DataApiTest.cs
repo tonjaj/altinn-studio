@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -9,13 +7,10 @@ using System.Threading.Tasks;
 
 using Altinn.App.Common.Models;
 using Altinn.App.IntegrationTests;
-using Altinn.App.Services.Interface;
 using Altinn.Platform.Storage.Interface.Models;
-using App.IntegrationTests.Mocks.Services;
 using App.IntegrationTests.Utils;
 using App.IntegrationTestsRef.Utils;
-using Microsoft.Extensions.Logging;
-using Moq;
+
 using Newtonsoft.Json;
 
 using Xunit;
@@ -182,13 +177,15 @@ namespace App.IntegrationTests.ApiTests
             string token = PrincipalUtil.GetToken(1337);
             TestDataUtil.PrepareInstance("tdd", "custom-validation", 1337, new Guid("182e053b-3c74-46d4-92ec-a2828289a877"));
 
+            const string dataUri = "/tdd/custom-validation/instances/1337/182e053b-3c74-46d4-92ec-a2828289a877/data/7dfeffd1-1750-4e4a-8107-c6741e05d2a9";
+
             HttpClient client = SetupUtil.GetTestClient(_factory, "tdd", "custom-validation");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, "/tdd/custom-validation/instances/1337/182e053b-3c74-46d4-92ec-a2828289a877/data/7dfeffd1-1750-4e4a-8107-c6741e05d2a9");
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, dataUri);
 
             HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
             string responseContent = await response.Content.ReadAsStringAsync();
-            HttpRequestMessage putRequestMessage = new HttpRequestMessage(HttpMethod.Put, "/tdd/custom-validation/instances/1337/182e053b-3c74-46d4-92ec-a2828289a877/data/7dfeffd1-1750-4e4a-8107-c6741e05d2a9")
+            HttpRequestMessage putRequestMessage = new HttpRequestMessage(HttpMethod.Put, dataUri)
             {
                 Content = new StringContent(responseContent, Encoding.UTF8, "application/json"),
             };
@@ -197,6 +194,7 @@ namespace App.IntegrationTests.ApiTests
             responseContent = await response.Content.ReadAsStringAsync();
             CalculationResult calculationResult = JsonConvert.DeserializeObject<CalculationResult>(responseContent);
             Assert.Equal(HttpStatusCode.SeeOther, response.StatusCode);
+            Assert.EndsWith(dataUri, response.Headers.Location.OriginalString);
             Assert.Contains(calculationResult.ChangedFields.Keys, k => k == "OpplysningerOmArbeidstakerengrp8819.Skjemainstansgrp8854.TestRepeatinggrp123[0].value");
             Assert.Equal(555, Convert.ToInt32(calculationResult.ChangedFields["OpplysningerOmArbeidstakerengrp8819.Skjemainstansgrp8854.TestRepeatinggrp123[0].value"]));
             Assert.Equal(1000, Convert.ToInt32(calculationResult.ChangedFields["OpplysningerOmArbeidstakerengrp8819.Skjemainstansgrp8854.Journalnummerdatadef33316.value"]));

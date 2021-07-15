@@ -554,7 +554,7 @@ namespace Altinn.App.Api.Controllers
 
             string serviceModelJsonString = JsonSerializer.Serialize(serviceModel);
 
-            bool changedByCalculation = false;
+            bool changedByCalculation;
             try
             {
                 changedByCalculation = await _altinnApp.RunProcessDataWrite(instance, dataGuid, serviceModel);
@@ -596,6 +596,7 @@ namespace Altinn.App.Api.Controllers
                     _logger.LogError(e, "Unable to determine changed fields");
                 }
 
+                Response.Headers.Add("Location", updatedDataElement.SelfLinks.Apps.Replace("https:", "http:"));
                 return StatusCode((int)HttpStatusCode.SeeOther, calculationResult);
             }
 
